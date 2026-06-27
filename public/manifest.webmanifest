@@ -1,0 +1,17 @@
+{
+  "name": "GCHeros",
+  "short_name": "GCHeros",
+  "description": "Report and track local civic issues.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0B0C10",
+  "theme_color": "#66FCF1",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

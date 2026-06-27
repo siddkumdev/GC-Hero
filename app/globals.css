@@ -1,26 +1,457 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
+  /* Light mode glassmorphism */
+  --c-bg: #F3F4F6;
+  --c-surface: rgba(255, 255, 255, 0.9);
+  --c-surface-2: rgba(255, 255, 255, 0.85);
+  --c-surface-muted: rgba(0, 0, 0, 0.05);
+  
+  /* Neon Accents (slightly stronger to pop on light) */
+  --c-accent: #008B8B;
+  --c-accent-strong: #005F5F;
+  --c-accent-weak: rgba(0, 139, 139, 0.15);
+  --c-on-accent: #FFFFFF;
+  --c-accent-ring: rgba(0, 139, 139, 0.5);
+  
+  --c-magenta: #C71585;
+  --c-magenta-weak: rgba(199, 21, 133, 0.15);
+
+  --c-border: rgba(0, 0, 0, 0.1);
+  --c-border-strong: rgba(0, 0, 0, 0.2);
+  
+  --c-ink: #111827;
+  --c-text: #374151;
+  --c-muted: #6B7280;
+  --c-faint: #9CA3AF;
+
+  --c-high: #E11D48; --c-high-bg: rgba(225, 29, 72, 0.15); --c-high-bd: rgba(225, 29, 72, 0.3);
+  --c-med: #D97706; --c-med-bg: rgba(217, 119, 6, 0.15); --c-med-bd: rgba(217, 119, 6, 0.3);
+  --c-low: #2563EB; --c-low-bg: rgba(37, 99, 235, 0.15); --c-low-bd: rgba(37, 99, 235, 0.3);
+  --c-ok: #059669; --c-ok-bg: rgba(5, 150, 105, 0.15); --c-ok-bd: rgba(5, 150, 105, 0.3);
+
+  --c-shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --c-shadow-md: 0 8px 16px -4px rgba(0, 0, 0, 0.15), 0 0 10px rgba(0, 139, 139, 0.1);
+  --c-shadow-float: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 0 15px rgba(0, 139, 139, 0.15);
+  
+  --c-radius-lg: 24px;
+  --c-radius: 16px;
+  --c-radius-sm: 12px;
+  --c-radius-pill: 9999px;
+  
+  --color-background: var(--c-bg);
+  --color-foreground: var(--c-text);
+
+  /* Legacy light tokens fallback for untransitioned code */
+  --bg: #F3F4F6;
+  --surface: rgba(255, 255, 255, 0.7);
+  --text: #374151;
+  --accent: #008B8B;
+}
+
+.dark {
+  color-scheme: dark;
+  /* Dark space background */
+  --c-bg: #0B0C10; 
+  /* Glass surfaces */
+  --c-surface: rgba(31, 40, 51, 0.9);
+  --c-surface-2: rgba(31, 40, 51, 0.85);
+  --c-surface-muted: rgba(255, 255, 255, 0.05);
+  
+  /* Neon Accents */
+  --c-accent: #66FCF1; 
+  --c-accent-strong: #45A29E;
+  --c-accent-weak: rgba(102, 252, 241, 0.15);
+  --c-on-accent: #0B0C10;
+  --c-accent-ring: rgba(102, 252, 241, 0.5);
+  
+  /* Magenta for secondary accent */
+  --c-magenta: #FF00FF;
+  --c-magenta-weak: rgba(255, 0, 255, 0.15);
+
+  /* Borders */
+  --c-border: rgba(255, 255, 255, 0.1);
+  --c-border-strong: rgba(255, 255, 255, 0.2);
+  
+  /* Text */
+  --c-ink: #FFFFFF;
+  --c-text: #C5C6C7;
+  --c-muted: #9BA3AE;
+  --c-faint: #6B7280;
+  
+  /* Severity */
+  --c-high: #FF3366; --c-high-bg: rgba(255, 51, 102, 0.15); --c-high-bd: rgba(255, 51, 102, 0.3);
+  --c-med: #FFCC00; --c-med-bg: rgba(255, 204, 0, 0.15); --c-med-bd: rgba(255, 204, 0, 0.3);
+  --c-low: #3399FF; --c-low-bg: rgba(51, 153, 255, 0.15); --c-low-bd: rgba(51, 153, 255, 0.3);
+  --c-ok: #66FCF1; --c-ok-bg: rgba(102, 252, 241, 0.15); --c-ok-bd: rgba(102, 252, 241, 0.3);
+
+  /* Shadows */
+  --c-shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  --c-shadow-md: 0 8px 16px -4px rgba(0, 0, 0, 0.5), 0 0 10px rgba(102, 252, 241, 0.1);
+  --c-shadow-float: 0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 0 15px rgba(102, 252, 241, 0.15);
+  
+  --c-radius-lg: 24px;
+  --c-radius: 16px;
+  --c-radius-sm: 12px;
+  --c-radius-pill: 9999px;
+  
+  --color-background: var(--c-bg);
+  --color-foreground: var(--c-text);
+
+  /* Legacy light tokens fallback for untransitioned code */
+  --bg: #0B0C10;
+  --surface: rgba(31, 40, 51, 0.6);
+  --text: #C5C6C7;
+  --accent: #66FCF1;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: var(--c-bg);
+  --color-foreground: var(--c-text);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html, body {
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: var(--font-body), Inter, system-ui, sans-serif;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Civic overrides for full rollout */
+.civic {
+  background: transparent;
+  color: var(--c-text);
+}
+
+/* Glassmorphism surfaces */
+.cv-card, .cv-elevated, .cv-well, .cv-map-pill {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  color: var(--c-text);
+}
+
+.cv-card {
+  border-radius: var(--c-radius);
+  box-shadow: var(--c-shadow-sm);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.cv-card:hover {
+  box-shadow: var(--c-shadow-md);
+  border-color: var(--c-accent-ring);
+  transform: translateY(-2px) scale(1.01);
+}
+
+.cv-elevated {
+  border-radius: var(--c-radius-lg);
+  box-shadow: var(--c-shadow-md);
+}
+
+.cv-well {
+  background: var(--c-surface-2);
+  border-radius: var(--c-radius);
+}
+
+.cv-ai-surface {
+  background: linear-gradient(180deg, var(--c-accent-weak), var(--c-surface) 60%);
+  border: 1px solid var(--c-accent-weak);
+}
+
+/* Typography */
+h1, h2, h3, .cv-display, .civic h1, .civic h2, .civic h3 {
+  color: var(--c-ink);
+  font-family: var(--font-display), "Space Grotesk", var(--font-body), sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* Buttons */
+.cv-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: var(--c-radius-sm);
+  font-weight: 600;
+  padding: 0.75rem 1.25rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  line-height: 1;
+}
+.cv-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.cv-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--c-accent-ring);
+}
+
+.cv-btn-primary {
+  background: var(--c-accent);
+  color: var(--c-on-accent);
+  box-shadow: 0 0 15px var(--c-accent-ring);
+}
+
+.cv-btn-primary:hover:not(:disabled) {
+  box-shadow: 0 0 25px var(--c-accent-ring);
+  transform: scale(1.05);
+}
+
+.cv-btn-secondary {
+  background: var(--c-surface-muted);
+  color: var(--c-ink);
+  border-color: var(--c-border-strong);
+}
+
+.cv-btn-secondary:hover:not(:disabled) {
+  border-color: var(--c-accent);
+  box-shadow: 0 0 15px var(--c-accent-ring);
+  background: var(--c-surface);
+}
+
+.cv-btn-ghost {
+  background: transparent;
+  color: var(--c-muted);
+}
+
+.cv-btn-ghost:hover:not(:disabled) {
+  color: var(--c-accent);
+  background: var(--c-surface-muted);
+}
+
+.cv-icon-btn {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  color: var(--c-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.cv-icon-btn:hover { color: var(--c-ink); background: var(--c-surface-muted); }
+.cv-icon-btn:active { transform: scale(0.9); }
+.cv-icon-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--c-accent-ring); }
+
+/* Inputs */
+.cv-field {
+  width: 100%;
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--c-radius-sm);
+  padding: 0.75rem 1rem;
+  color: var(--c-ink);
+  outline: none;
+  transition: all 0.2s ease;
+}
+.cv-field:focus {
+  border-color: var(--c-accent);
+  box-shadow: 0 0 0 3px var(--c-accent-ring);
+  background: var(--c-surface);
+}
+
+/* Chips / Pills */
+.cv-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.76rem;
+  font-weight: 600;
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-surface);
+  color: var(--c-ink);
+}
+
+/* Semantic Chips */
+.cv-sev-high { color: var(--c-high); background: var(--c-high-bg); border-color: var(--c-high-bd); text-shadow: 0 0 5px rgba(255, 51, 102, 0.5); }
+.cv-sev-med  { color: var(--c-med);  background: var(--c-med-bg);  border-color: var(--c-med-bd); text-shadow: 0 0 5px rgba(255, 204, 0, 0.5); }
+.cv-sev-low  { color: var(--c-low);  background: var(--c-low-bg);  border-color: var(--c-low-bd); text-shadow: 0 0 5px rgba(51, 153, 255, 0.5); }
+.cv-sev-ok   { color: var(--c-ok);   background: var(--c-ok-bg);   border-color: var(--c-ok-bd); text-shadow: 0 0 5px rgba(102, 252, 241, 0.5); }
+
+/* Shimmer & Skeleton */
+@keyframes cv-shimmer {
+  100% { transform: translateX(100%); }
+}
+.cv-shimmer::after, .cv-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(102, 252, 241, 0.1), transparent);
+  animation: cv-shimmer 1.5s infinite;
+}
+.cv-skeleton {
+  background: var(--c-surface-2);
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--c-radius);
+}
+.cv-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Tiles & Icons */
+.cv-icon-tile {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--c-surface-muted), var(--c-accent-weak));
+  color: var(--c-accent);
+  border: 1px solid var(--c-accent-ring);
+  box-shadow: inset 0 0 10px rgba(102, 252, 241, 0.1);
+}
+.cv-icon-tile-lg { width: 52px; height: 52px; border-radius: 14px; }
+
+
+/* FAB */
+.cv-fab {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  background: var(--c-accent);
+  color: var(--c-on-accent);
+  box-shadow: 0 0 15px var(--c-accent-ring);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+.cv-fab:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 25px var(--c-accent-ring);
+}
+.cv-fab:active { transform: translateY(1px) scale(0.96); box-shadow: 0 4px 8px -4px var(--c-accent-ring); }
+
+/* Nav Link */
+.cv-nav-link {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  color: var(--c-faint);
+  transition: all 0.2s ease;
+}
+.cv-nav-link:hover { color: var(--c-ink); background: var(--c-surface-muted); }
+.cv-nav-link[aria-pressed="true"] {
+  color: var(--c-accent);
+  background: var(--c-accent-weak);
+  box-shadow: 0 0 15px var(--c-accent-ring);
+}
+
+/* Map Pill */
+.cv-map-pill {
+  position: fixed;
+  left: 50%;
+  bottom: calc(80px + env(safe-area-inset-bottom));
+  z-index: 500;
+  width: calc(100% - 2rem);
+  max-width: 28rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem 0.6rem 0.6rem;
+  border-radius: var(--c-radius-pill);
+  box-shadow: var(--c-shadow-float);
+}
+
+/* Map Pins */
+.cv-pin-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent !important;
+  border: none !important;
+}
+.cv-pin-bubble {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--c-surface);
+  border: 2px solid var(--c-accent);
+  box-shadow: 0 0 10px var(--c-accent-ring);
+  transition: all 0.2s ease;
+}
+.cv-pin-bubble:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 20px var(--c-accent-ring);
+  background: var(--c-accent-weak);
+}
+.cv-pin-count {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--c-accent);
+  color: var(--c-on-accent);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  border: 1px solid var(--c-bg);
+}
+
+/* Leaflet Overrides for Dark Mode */
+.dark .cv-map .leaflet-tile {
+  filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+}
+.cv-map .leaflet-tile {
+  transition: filter 0.3s ease;
+}
+.leaflet-popup-content-wrapper {
+  border-radius: var(--c-radius) !important;
+  background: var(--c-surface) !important;
+  color: var(--c-ink) !important;
+  border: 1px solid var(--c-border) !important;
+  box-shadow: var(--c-shadow-md) !important;
+}
+.leaflet-popup-tip {
+  background: var(--c-surface) !important;
+  border: 1px solid var(--c-border) !important;
+}
+
+.leaflet-control-attribution {
+  font-size: 9px !important;
+  line-height: 1.3 !important;
+  padding: 1px 5px !important;
+  background: rgba(11, 12, 16, 0.72) !important;
+  border-radius: 4px 4px 0 0 !important;
+  opacity: 0.85;
+  color: var(--c-muted) !important;
+  max-width: 55vw !important;
+}
+.leaflet-control-attribution a {
+  color: var(--c-accent-strong) !important;
+}
+
+/* Typography / Utilities */
+.cv-eyebrow {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--c-accent);
+}
+.cv-link {
+  color: var(--c-accent);
+  font-weight: 600;
+  text-decoration: none;
+  transition: text-shadow 0.2s ease;
+}
+.cv-link:hover {
+  text-shadow: 0 0 8px var(--c-accent-ring);
 }

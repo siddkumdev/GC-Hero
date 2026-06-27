@@ -1,0 +1,92 @@
+// Community Hero data layer.
+// SQLite for the demo; architected for a config-only swap to Postgres (see .memory/data-model.md).
+// Statuses & categories are validated in app code (lib/config.ts) since SQLite has no native enums.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  createdAt DateTime @default(now())
+
+  reports       Report[]
+  verifications Verification[]
+}
+
+/// A de-duplicated, tracked civic issue: "one item, N reports".
+model Cluster {
+  id          String   @id @default(cuid())
+  category    String
+  severity    String // highest severity seen among member reports: low | med | high
+  status      String   @default("submitted") // submitted | acknowledged | in_progress | resolved
+  title       String
+  summary     String
+  centroidLat Float
+  centroidLng Float
+  reportCount Int      @default(0) // denormalized for fast "Reported by N citizens"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // F1 — before/after resolution verification (Gemini vision). Additive + nullable; populated
+  // only once the AI confirms the issue is fixed (status then flips to "resolved").
+  resolutionImagePath String? // the "after" photo that was compared against the original
+  resolutionConfidence Float? // Gemini's 0..1 confidence in the "resolved" verdict
+  resolutionReasoning  String? // Gemini's plain-language explanation of the verdict
+  resolvedAt           DateTime? // when the AI confirmed it fixed
+
+  // F4 — community verification ("I see this too"). Denormalized count of distinct citizens who
+  // corroborated WITHOUT filing a full report (lightweight one-tap). Disjoint from reportCount by
+  // construction (a reporter can't also verify), so credibility = reportCount + verifiedCount.
+  verifiedCount Int @default(0)
+
+  reports       Report[]
+  verifications Verification[]
+}
+
+/// A single citizen submission.
+model Report {
+  id             String   @id @default(cuid())
+  category       String
+  severity       String // low | med | high
+  description    String
+  department     String // simulated routing target
+  complaintDraft String
+  isValid        Boolean  @default(true)
+  imagePath      String // served from /public/uploads
+  lat            Float
+  lng            Float
+  embedding      String // JSON-stringified number[] (description embedding)
+  createdAt      DateTime @default(now())
+
+  userId    String
+  user      User    @relation(fields: [userId], references: [id])
+  clusterId String?
+  cluster   Cluster? @relation(fields: [clusterId], references: [id])
+
+  @@index([category])
+  @@index([clusterId])
+}
+
+/// F4 — a lightweight "I see this too" corroboration: a citizen confirms an existing issue
+/// WITHOUT filing a full report (no photo/Gemini). The unique pair enforces "one per user per
+/// issue" at the DB level, so the credibility signal can never be inflated by double-tapping.
+model Verification {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  userId    String
+  user      User    @relation(fields: [userId], references: [id])
+  clusterId String
+  cluster   Cluster @relation(fields: [clusterId], references: [id])
+
+  @@unique([clusterId, userId])
+  @@index([userId])
+}

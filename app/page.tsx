@@ -1,65 +1,125 @@
-import Image from "next/image";
+import Link from "next/link";
+import { findClustersWithFilter } from "@/lib/db/clusters";
+import {
+  CATEGORIES,
+  CATEGORY_LABELS,
+  STATUSES,
+  urgencyScore,
+  type Severity,
+} from "@/lib/config";
+import ClusterCard from "@/components/civic/ClusterCard";
+import DigestCard from "@/components/civic/DigestCard";
+import StaggerList from "@/components/civic/StaggerList";
 
-export default function Home() {
+
+export const dynamic = "force-dynamic";
+
+// Dashboard: tracked clusters (de-duplicated issues), filterable, sorted by urgency.
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string; status?: string }>;
+}) {
+  const sp = await searchParams;
+  const category =
+    sp.category && (CATEGORIES as readonly string[]).includes(sp.category)
+      ? sp.category
+      : undefined;
+  const status =
+    sp.status && (STATUSES as readonly string[]).includes(sp.status)
+      ? sp.status
+      : undefined;
+
+  // Migrated from Prisma — 2026-06-24
+  const clusters = await findClustersWithFilter({ category, status });
+
+  const ranked = clusters
+    .map((c) => ({
+      ...c,
+      urgency: urgencyScore(c.severity as Severity, c.reportCount),
+    }))
+    .sort((a, b) => b.urgency - a.urgency);
+
+  const totalReports = ranked.reduce((s, c) => s + c.reportCount, 0);
+  const filtered = Boolean(category || status);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className="flex flex-col gap-5 w-full lg:max-w-2xl lg:mx-auto">
+      <div className="flex flex-col gap-1">
+        <span className="cv-eyebrow">GCHeros</span>
+        <h1 className="text-2xl">Civic issues</h1>
+        <p className="text-sm" style={{ color: "var(--c-muted)" }}>
+          {ranked.length} tracked issue{ranked.length === 1 ? "" : "s"} ·{" "}
+          {totalReports} report{totalReports === 1 ? "" : "s"}, sorted by urgency
+        </p>
+      </div>
+
+      <DigestCard />
+
+      {/* Filters */}
+      <form method="get" className="cv-card p-4 flex flex-wrap gap-3 items-end">
+        <label
+          className="flex flex-col gap-1.5 text-sm flex-1 min-w-28"
+          style={{ color: "var(--c-muted)" }}
+        >
+          Category
+          <select name="category" defaultValue={category ?? ""} className="cv-field">
+            <option value="">All</option>
+            {CATEGORIES.map((c) => (
+              <option key={c} value={c}>
+                {CATEGORY_LABELS[c]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label
+          className="flex flex-col gap-1.5 text-sm flex-1 min-w-28"
+          style={{ color: "var(--c-muted)" }}
+        >
+          Status
+          <select
+            name="status"
+            defaultValue={status ?? ""}
+            className="cv-field"
+            style={{ textTransform: "capitalize" }}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <option value="">All</option>
+            {STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {s.replace(/_/g, " ")}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button type="submit" className="cv-btn cv-btn-primary">
+          Apply
+        </button>
+        {filtered && (
+          <Link href="/" className="cv-link self-center text-sm">
+            Clear
+          </Link>
+        )}
+      </form>
+
+      {ranked.length === 0 ? (
+        <div
+          className="cv-card p-8 text-center text-sm"
+          style={{ color: "var(--c-muted)" }}
+        >
+          {filtered
+            ? "No issues match these filters."
+            : "No issues yet. Tap + to report the first one."}
         </div>
-      </main>
+      ) : (
+        <StaggerList>
+          {ranked.map((c) => (
+            <li key={c.id}>
+              <ClusterCard cluster={c} />
+            </li>
+          ))}
+        </StaggerList>
+      )}
     </div>
   );
 }
+

@@ -1,0 +1,17 @@
+node_modules
+.next
+.env
+.env.local
+.env.development
+.env.production
+*.db
+*.db-journal
+prisma/
+.memory/
+README*
+*.md
+!package.json
+public/uploads/*
+.git
+.claude
+scripts/deploy.sh
