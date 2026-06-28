@@ -44,6 +44,7 @@ export const viewport: Viewport = {
 };
 
 import Sidebar from "@/components/Sidebar";
+import OnboardingTour from "@/components/OnboardingTour";
 
 export default function RootLayout({
   children,
@@ -65,6 +66,7 @@ export default function RootLayout({
             <main className="flex-1 pt-5 lg:pt-0">{children}</main>
           </div>
           <BottomNav />
+          <OnboardingTour />
           <ServiceWorkerRegister />
         </ThemeProvider>
       </body>

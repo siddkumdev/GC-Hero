@@ -45,6 +45,7 @@ export default function BottomNav() {
           aria-label="Map"
           className="cv-nav-link"
           aria-pressed={isActive("/map")}
+          data-tour="map-btn"
         >
           <Map size={21} strokeWidth={2} />
         </Link>
@@ -55,6 +56,7 @@ export default function BottomNav() {
           aria-label="Report an issue"
           className="cv-fab -mt-8"
           title="Report an issue"
+          data-tour="fab"
         >
           <Plus size={26} strokeWidth={2.4} />
         </Link>

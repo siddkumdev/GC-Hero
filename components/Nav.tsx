@@ -43,6 +43,7 @@ export default async function Nav() {
             aria-label="Search issues"
             title="Search issues"
             className="cv-icon-btn"
+            data-tour="search-btn"
           >
             <Search size={18} strokeWidth={2.2} />
           </Link>

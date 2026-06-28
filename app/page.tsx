@@ -45,7 +45,7 @@ export default async function DashboardPage({
 
   return (
     <div className="flex flex-col gap-5 w-full lg:max-w-2xl lg:mx-auto">
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1" data-tour="feed">
         <span className="cv-eyebrow">GCHeros</span>
         <h1 className="text-2xl">Civic issues</h1>
         <p className="text-sm" style={{ color: "var(--c-muted)" }}>
@@ -57,7 +57,7 @@ export default async function DashboardPage({
       <DigestCard />
 
       {/* Filters */}
-      <form method="get" className="cv-card p-4 flex flex-wrap gap-3 items-end">
+      <form method="get" className="cv-card p-4 flex flex-wrap gap-3 items-end" data-tour="filters">
         <label
           className="flex flex-col gap-1.5 text-sm flex-1 min-w-28"
           style={{ color: "var(--c-muted)" }}
