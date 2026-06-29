@@ -27,6 +27,7 @@ export default function BottomNav() {
           background: "var(--c-surface-2)",
           backdropFilter: "blur(16px)",
           WebkitBackdropFilter: "blur(16px)",
+          willChange: "transform",
           border: "1px solid var(--c-border)",
           borderRadius: "var(--c-radius-pill)",
           boxShadow: "var(--c-shadow-float)",

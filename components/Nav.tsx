@@ -17,7 +17,8 @@ export default async function Nav() {
         borderColor: "var(--c-border)",
         background: "var(--c-surface-2)",
         backdropFilter: "blur(12px)",
-        WebkitBackdropFilter: "blur(12px)"
+        WebkitBackdropFilter: "blur(12px)",
+        willChange: "transform"
       }}
     >
       <Link href="/" className="flex items-center gap-2">

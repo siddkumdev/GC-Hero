@@ -184,43 +184,42 @@ export default function OnboardingTour() {
             onClick={finish}
           />
 
-          {/* Spotlight: box-shadow creates the dark vignette; the div itself is the "hole" */}
-          <AnimatePresence mode="wait">
-            {rect ? (
-              <motion.div
-                key="spotlight"
-                className="fixed z-[9001] pointer-events-none"
-                initial={{ opacity: 0, scale: 0.85 }}
-                animate={{
-                  opacity: 1,
-                  scale: 1,
-                  top: rect.top,
-                  left: rect.left,
-                  width: rect.width,
-                  height: rect.height,
-                }}
-                exit={{ opacity: 0, scale: 0.9 }}
+          {/* SVG spotlight — mask punches a hole in the dark overlay.
+              Much faster than box-shadow:0 0 0 9999px in Firefox. */}
+          <motion.svg
+            key="spotlight-svg"
+            className="fixed inset-0 z-[9001] pointer-events-none"
+            style={{ width: "100%", height: "100%", overflow: "visible" }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <defs>
+              <mask id="tour-hole">
+                <rect width="100%" height="100%" fill="white" />
+                {rect && (
+                  <motion.rect
+                    rx={14}
+                    fill="black"
+                    animate={{ x: rect.left, y: rect.top, width: rect.width, height: rect.height }}
+                    transition={{ type: "spring", stiffness: 280, damping: 28 }}
+                  />
+                )}
+              </mask>
+            </defs>
+            <rect width="100%" height="100%" fill="rgba(0,0,0,0.72)" mask="url(#tour-hole)" />
+            {rect && (
+              <motion.rect
+                rx={14}
+                fill="none"
+                stroke="var(--c-accent)"
+                strokeWidth={1.5}
+                animate={{ x: rect.left, y: rect.top, width: rect.width, height: rect.height }}
                 transition={{ type: "spring", stiffness: 280, damping: 28 }}
-                style={{
-                  borderRadius: 14,
-                  boxShadow: "0 0 0 9999px rgba(0,0,0,0.72)",
-                  border: "1.5px solid var(--c-accent)",
-                  boxSizing: "border-box",
-                }}
-              />
-            ) : (
-              // No element found — full dim overlay without a hole
-              <motion.div
-                key="dim"
-                className="fixed inset-0 z-[9001] pointer-events-none"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                style={{ background: "rgba(0,0,0,0.72)" }}
               />
             )}
-          </AnimatePresence>
+          </motion.svg>
 
           {/* Tooltip card */}
           <AnimatePresence mode="wait">

@@ -10,7 +10,7 @@ export default async function Sidebar() {
   const user = await getCurrentUser();
 
   return (
-    <aside className="hidden lg:flex flex-col w-64 border-r border-[var(--c-border)] p-6 h-[100vh] sticky top-0 bg-[var(--c-surface-2)] backdrop-blur-xl">
+    <aside className="hidden lg:flex flex-col w-64 border-r border-[var(--c-border)] p-6 h-[100vh] sticky top-0 bg-[var(--c-surface-2)] backdrop-blur-xl" style={{ willChange: "transform" }}>
       <Link href="/" className="flex items-center gap-2 mb-2 group">
         <span
           className="grid h-9 w-9 place-items-center rounded-xl shadow-[0_4px_12px_var(--c-accent-ring)] border border-[var(--c-accent-weak)] transition-transform duration-500 ease-out group-hover:scale-105 group-hover:shadow-[0_0_20px_var(--c-accent-ring)]"
