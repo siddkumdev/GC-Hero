@@ -111,27 +111,63 @@ export default function OnboardingTour() {
   const cur = STEPS[step];
   const isLast = step === STEPS.length - 1;
 
-  // Tooltip position: centred horizontally, above or below the spotlight rect.
-  // Auto-flip if the preferred placement would overflow the viewport.
-  const vp = typeof window !== "undefined" ? { w: window.innerWidth, h: window.innerHeight } : { w: 390, h: 844 };
+  const vp = (typeof window !== "undefined" && window.innerWidth > 0)
+    ? { w: window.innerWidth, h: window.innerHeight }
+    : { w: 390, h: 844 };
   const tooltipW = Math.min(vp.w - 32, 340);
-  const CARD_H = 200; // conservative card height estimate
+  const CARD_H = 210;
   const MARGIN = 16;
 
-  let placement = cur.placement;
+  // Compute actual placement: prefer left/right when the spotlight is near a horizontal edge,
+  // otherwise use the step's declared above/below preference (with vertical flip if needed).
+  type Dir = "above" | "below" | "right" | "left";
+  let placement: Dir = cur.placement;
   if (rect) {
-    if (placement === "above" && rect.top - CARD_H - MARGIN < 0) placement = "below";
-    if (placement === "below" && rect.top + rect.height + CARD_H + MARGIN > vp.h) placement = "above";
+    const spotCX = rect.left + rect.width / 2;
+    if (spotCX < vp.w * 0.3 && rect.left + rect.width + MARGIN + tooltipW <= vp.w) {
+      placement = "right";
+    } else if (spotCX > vp.w * 0.7 && rect.left - MARGIN - tooltipW >= 0) {
+      placement = "left";
+    } else {
+      // above / below with flip
+      if (placement === "above" && rect.top - CARD_H - MARGIN < 0) placement = "below";
+      if (placement === "below" && rect.top + rect.height + CARD_H + MARGIN > vp.h) placement = "above";
+    }
   }
 
-  let tooltipY = vp.h / 2 - CARD_H / 2;
+  // Compute absolute top-left pixel position of the tooltip card (no CSS transforms needed).
+  let tooltipTop  = vp.h / 2 - CARD_H / 2;
+  let tooltipLeft = vp.w  / 2 - tooltipW / 2;
+
+  // Entrance slide direction (pixels)
+  let initDX = 0, initDY = 12;
+
   if (rect) {
-    tooltipY = placement === "above"
-      ? rect.top - MARGIN        // card translateY(-100%) from here
-      : rect.top + rect.height + MARGIN;
+    const spotCX = rect.left + rect.width / 2;
+    const spotCY = rect.top  + rect.height / 2;
+
+    if (placement === "right") {
+      tooltipLeft = rect.left + rect.width + MARGIN;
+      tooltipTop  = spotCY - CARD_H / 2;
+      initDX = -14; initDY = 0;
+    } else if (placement === "left") {
+      tooltipLeft = rect.left - MARGIN - tooltipW;
+      tooltipTop  = spotCY - CARD_H / 2;
+      initDX = 14; initDY = 0;
+    } else if (placement === "above") {
+      tooltipLeft = spotCX - tooltipW / 2;
+      tooltipTop  = rect.top - MARGIN - CARD_H;
+      initDX = 0; initDY = 12;
+    } else {
+      tooltipLeft = spotCX - tooltipW / 2;
+      tooltipTop  = rect.top + rect.height + MARGIN;
+      initDX = 0; initDY = -12;
+    }
   }
-  // Clamp so the card never overflows top or bottom
-  tooltipY = Math.max(MARGIN, Math.min(tooltipY, vp.h - CARD_H - MARGIN));
+
+  // Clamp so the card never overflows any viewport edge
+  tooltipLeft = Math.max(MARGIN, Math.min(tooltipLeft, vp.w - tooltipW - MARGIN));
+  tooltipTop  = Math.max(MARGIN, Math.min(tooltipTop,  vp.h - CARD_H  - MARGIN));
 
   return (
     <AnimatePresence>
@@ -191,16 +227,10 @@ export default function OnboardingTour() {
             <motion.div
               key={`tip-${step}`}
               className="fixed z-[9002] pointer-events-auto"
-              style={{
-                top: tooltipY,
-                left: "50%",
-                width: tooltipW,
-                x: "-50%",
-                ...(placement === "above" ? { y: "-100%" } : { y: 0 }),
-              }}
-              initial={{ opacity: 0, scale: 0.93, y: placement === "above" ? "calc(-100% + 12px)" : 12 }}
-              animate={{ opacity: 1, scale: 1, y: placement === "above" ? "-100%" : 0 }}
-              exit={{ opacity: 0, scale: 0.93, y: placement === "above" ? "calc(-100% + 8px)" : 8 }}
+              style={{ top: tooltipTop, left: tooltipLeft, width: tooltipW }}
+              initial={{ opacity: 0, scale: 0.95, x: initDX, y: initDY }}
+              animate={{ opacity: 1, scale: 1, x: 0, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, x: initDX / 2, y: initDY / 2 }}
               transition={{ type: "spring", stiffness: 420, damping: 30, delay: 0.08 }}
             >
               <div
