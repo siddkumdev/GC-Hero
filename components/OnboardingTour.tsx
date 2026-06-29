@@ -111,16 +111,27 @@ export default function OnboardingTour() {
   const cur = STEPS[step];
   const isLast = step === STEPS.length - 1;
 
-  // Tooltip position: centred horizontally, above or below the spotlight rect
+  // Tooltip position: centred horizontally, above or below the spotlight rect.
+  // Auto-flip if the preferred placement would overflow the viewport.
   const vp = typeof window !== "undefined" ? { w: window.innerWidth, h: window.innerHeight } : { w: 390, h: 844 };
   const tooltipW = Math.min(vp.w - 32, 340);
+  const CARD_H = 200; // conservative card height estimate
+  const MARGIN = 16;
 
-  let tooltipY = vp.h / 2 - 80;
+  let placement = cur.placement;
   if (rect) {
-    tooltipY = cur.placement === "above"
-      ? rect.top - 16        // card will translateY(-100%) from this point
-      : rect.top + rect.height + 16;
+    if (placement === "above" && rect.top - CARD_H - MARGIN < 0) placement = "below";
+    if (placement === "below" && rect.top + rect.height + CARD_H + MARGIN > vp.h) placement = "above";
   }
+
+  let tooltipY = vp.h / 2 - CARD_H / 2;
+  if (rect) {
+    tooltipY = placement === "above"
+      ? rect.top - MARGIN        // card translateY(-100%) from here
+      : rect.top + rect.height + MARGIN;
+  }
+  // Clamp so the card never overflows top or bottom
+  tooltipY = Math.max(MARGIN, Math.min(tooltipY, vp.h - CARD_H - MARGIN));
 
   return (
     <AnimatePresence>
@@ -185,11 +196,11 @@ export default function OnboardingTour() {
                 left: "50%",
                 width: tooltipW,
                 x: "-50%",
-                ...(cur.placement === "above" ? { y: "-100%" } : { y: 0 }),
+                ...(placement === "above" ? { y: "-100%" } : { y: 0 }),
               }}
-              initial={{ opacity: 0, scale: 0.93, y: cur.placement === "above" ? "calc(-100% + 12px)" : 12 }}
-              animate={{ opacity: 1, scale: 1, y: cur.placement === "above" ? "-100%" : 0 }}
-              exit={{ opacity: 0, scale: 0.93, y: cur.placement === "above" ? "calc(-100% + 8px)" : 8 }}
+              initial={{ opacity: 0, scale: 0.93, y: placement === "above" ? "calc(-100% + 12px)" : 12 }}
+              animate={{ opacity: 1, scale: 1, y: placement === "above" ? "-100%" : 0 }}
+              exit={{ opacity: 0, scale: 0.93, y: placement === "above" ? "calc(-100% + 8px)" : 8 }}
               transition={{ type: "spring", stiffness: 420, damping: 30, delay: 0.08 }}
             >
               <div
