@@ -113,27 +113,54 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* ─── Background orb animations (CSS @keyframes = off-main-thread) ──────────
+   Pure CSS animations so the compositor handles them without JS overhead.
+   Percentage translate is relative to the element itself, same as Framer
+   Motion's x/y shorthand. Firefox freezes these via animation-play-state.
+   ──────────────────────────────────────────────────────────────────────────── */
+@keyframes cv-orb-float-1 {
+  0%, 100% { transform: translate(0, 0); }
+  50%       { transform: translate(20%, 10%); }
+}
+@keyframes cv-orb-float-2 {
+  0%, 100% { transform: translate(0, 0); }
+  50%       { transform: translate(-15%, -20%); }
+}
+@keyframes cv-orb-pulse {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.2); }
+}
+
+.cv-bg-orb { will-change: transform; }
+.cv-orb-1     { background: radial-gradient(circle, var(--c-accent) 0%, transparent 70%);
+                animation: cv-orb-float-1 15s ease-in-out infinite; }
+.cv-orb-2     { background: radial-gradient(circle, var(--c-magenta) 0%, transparent 70%);
+                animation: cv-orb-float-2 20s ease-in-out infinite; }
+.cv-orb-pulse { background: radial-gradient(circle, var(--c-accent-strong) 0%, transparent 70%);
+                animation: cv-orb-pulse 10s ease-in-out infinite; }
+
 /* ─── Firefox perf fix ───────────────────────────────────────────────────────
-   Firefox re-samples backdrop-filter on every frame when the animated
-   background orbs move, causing severe jank. Stamp [data-ff] via
-   FirefoxDetect.tsx and swap all blur surfaces for solid ones here.
-   !important overrides React inline styles (backdropFilter: "blur(...)").
+   Two-part fix:
+   1. Disable backdrop-filter — Firefox re-samples blur every frame when the
+      background moves. !important overrides inline backdropFilter styles.
+   2. Pause orb animations — even without blur, animating large GPU-promoted
+      gradient elements is slower in Firefox than Chrome. Static background
+      eliminates continuous compositor work. Framer Motion's WAAPI cannot be
+      stopped by CSS !important, which is why we switched to CSS @keyframes.
    ──────────────────────────────────────────────────────────────────────────── */
 [data-ff] * {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
+[data-ff] .cv-bg-orb {
+  animation-play-state: paused !important;
+}
 
 /* Make surfaces opaque so they look intentional without the blur */
-[data-ff] {
-  --c-surface:   rgba(22, 28, 36, 0.98);
-  --c-surface-2: rgba(22, 28, 36, 0.98);
-}
 [data-ff].dark {
   --c-surface:   rgba(22, 28, 36, 0.98);
   --c-surface-2: rgba(22, 28, 36, 0.98);
 }
-/* Light mode Firefox */
 [data-ff]:not(.dark) {
   --c-surface:   rgba(255, 255, 255, 0.98);
   --c-surface-2: rgba(255, 255, 255, 0.98);
@@ -161,7 +188,9 @@ html, body {
 .cv-card {
   border-radius: var(--c-radius);
   box-shadow: var(--c-shadow-sm);
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transition: box-shadow 0.3s cubic-bezier(0.25, 0.8, 0.25, 1),
+              transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1),
+              border-color 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 .cv-card:hover {
@@ -203,7 +232,8 @@ h1, h2, h3, .cv-display, .civic h1, .civic h2, .civic h3 {
   font-weight: 600;
   padding: 0.75rem 1.25rem;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease,
+              box-shadow 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
   border: 1px solid transparent;
   line-height: 1;
 }
