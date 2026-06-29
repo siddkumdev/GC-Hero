@@ -44,10 +44,16 @@ type Rect = { top: number; left: number; width: number; height: number };
 
 function getRect(target: string): Rect | null {
   if (typeof document === "undefined") return null;
-  const el = document.querySelector(`[data-tour="${target}"]`);
-  if (!el) return null;
-  const r = el.getBoundingClientRect();
-  return { top: r.top - PAD, left: r.left - PAD, width: r.width + PAD * 2, height: r.height + PAD * 2 };
+  // querySelectorAll handles duplicate data-tour attrs (sidebar + bottom nav).
+  // Pick the first element that is actually visible (non-zero size).
+  const els = document.querySelectorAll(`[data-tour="${target}"]`);
+  for (const el of Array.from(els)) {
+    const r = el.getBoundingClientRect();
+    if (r.width > 0 && r.height > 0) {
+      return { top: r.top - PAD, left: r.left - PAD, width: r.width + PAD * 2, height: r.height + PAD * 2 };
+    }
+  }
+  return null;
 }
 
 export default function OnboardingTour() {

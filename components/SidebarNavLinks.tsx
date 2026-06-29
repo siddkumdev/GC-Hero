@@ -25,6 +25,7 @@ export default function SidebarNavLinks() {
         aria-label="Map"
         className="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors hover:bg-[var(--c-surface-muted)] text-[var(--c-faint)] hover:text-[var(--c-ink)] aria-[pressed=true]:text-[var(--c-accent)] aria-[pressed=true]:bg-[var(--c-accent-weak)]"
         aria-pressed={isActive("/map")}
+        data-tour="map-btn"
       >
         <Map size={20} strokeWidth={2.2} />
         <span className="font-medium text-sm">Map</span>
@@ -34,6 +35,7 @@ export default function SidebarNavLinks() {
         aria-label="Search"
         className="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors hover:bg-[var(--c-surface-muted)] text-[var(--c-faint)] hover:text-[var(--c-ink)] aria-[pressed=true]:text-[var(--c-accent)] aria-[pressed=true]:bg-[var(--c-accent-weak)]"
         aria-pressed={isActive("/search")}
+        data-tour="search-btn"
       >
         <Search size={20} strokeWidth={2.2} />
         <span className="font-medium text-sm">Search</span>
@@ -42,6 +44,7 @@ export default function SidebarNavLinks() {
       <Link
         href="/report"
         className="cv-btn cv-btn-primary w-full justify-center"
+        data-tour="fab"
       >
         <Plus size={18} strokeWidth={2.4} />
         Report Issue
