@@ -113,6 +113,32 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* ─── Firefox perf fix ───────────────────────────────────────────────────────
+   Firefox re-samples backdrop-filter on every frame when the animated
+   background orbs move, causing severe jank. Stamp [data-ff] via
+   FirefoxDetect.tsx and swap all blur surfaces for solid ones here.
+   !important overrides React inline styles (backdropFilter: "blur(...)").
+   ──────────────────────────────────────────────────────────────────────────── */
+[data-ff] * {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Make surfaces opaque so they look intentional without the blur */
+[data-ff] {
+  --c-surface:   rgba(22, 28, 36, 0.98);
+  --c-surface-2: rgba(22, 28, 36, 0.98);
+}
+[data-ff].dark {
+  --c-surface:   rgba(22, 28, 36, 0.98);
+  --c-surface-2: rgba(22, 28, 36, 0.98);
+}
+/* Light mode Firefox */
+[data-ff]:not(.dark) {
+  --c-surface:   rgba(255, 255, 255, 0.98);
+  --c-surface-2: rgba(255, 255, 255, 0.98);
+}
+
 html, body {
   background: var(--c-bg);
   color: var(--c-text);

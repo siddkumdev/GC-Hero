@@ -45,6 +45,7 @@ export const viewport: Viewport = {
 
 import Sidebar from "@/components/Sidebar";
 import OnboardingTour from "@/components/OnboardingTour";
+import FirefoxDetect from "@/components/FirefoxDetect";
 
 export default function RootLayout({
   children,
@@ -67,6 +68,7 @@ export default function RootLayout({
           </div>
           <BottomNav />
           <OnboardingTour />
+          <FirefoxDetect />
           <ServiceWorkerRegister />
         </ThemeProvider>
       </body>
