@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { renderToStaticMarkup } from "react-dom/server";
 import {
@@ -16,6 +16,11 @@ import "leaflet/dist/leaflet.css";
 import { CATEGORY_LABELS, type Category } from "@/lib/config";
 import { categoryMeta, severityAccent } from "@/components/civic/meta";
 import type { ConfirmState } from "@/lib/types";
+
+// The average lat/lng of all seed clusters. MapView offsets every pin by
+// (userLat - DATA_CENTROID.lat, userLng - DATA_CENTROID.lng) so demo data
+// appears in the viewer's real neighbourhood regardless of where they are.
+const DATA_CENTROID = { lat: 12.972, lng: 77.637 };
 
 // Map provider is isolated here so swapping Leaflet -> Google Maps later is localized
 // (see .memory/decisions-log.md).
@@ -140,15 +145,36 @@ function LocateButton() {
 }
 
 // ---------------------------------------------------------------------------
-// Moves the attribution to the bottom-left so it never overlaps the pill
-// (which is centred at the bottom). Required attribution stays visible and
-// compliant with OpenStreetMap's CC BY-SA licence.
+// Moves the attribution to the bottom-left so it never overlaps the pill.
 // ---------------------------------------------------------------------------
 function CustomAttribution() {
   const map = useMap();
-  // useEffect isn't available inside react-leaflet hooks; the map instance is
-  // already initialised by the time this renders, so set it synchronously.
   map.attributionControl.setPosition("bottomleft");
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// FlyToOffset — child of MapContainer so it can call useMap().
+// Watches for a geoOffset and flies the map to the localized centroid.
+// ---------------------------------------------------------------------------
+function FlyToOffset({
+  geoOffset,
+  clusters,
+}: {
+  geoOffset: { lat: number; lng: number } | null;
+  clusters: MapCluster[];
+}) {
+  const map = useMap();
+  useEffect(() => {
+    if (!geoOffset || clusters.length === 0) return;
+    const avgLat = clusters.reduce((s, c) => s + c.centroidLat, 0) / clusters.length;
+    const avgLng = clusters.reduce((s, c) => s + c.centroidLng, 0) / clusters.length;
+    map.flyTo(
+      [avgLat + geoOffset.lat, avgLng + geoOffset.lng],
+      13,
+      { animate: true, duration: 1.2 },
+    );
+  }, [geoOffset]); // eslint-disable-line react-hooks/exhaustive-deps
   return null;
 }
 
@@ -158,16 +184,39 @@ function CustomAttribution() {
 export default function MapView({ clusters }: { clusters: MapCluster[] }) {
   const router = useRouter();
 
-  // Stable center on first render only (clusters[0] is arbitrary; default to
-  // Bengaluru if there are no issues yet).
+  // Geo-offset: shifts every demo pin to the viewer's real neighbourhood.
+  const [geoOffset, setGeoOffset] = useState<{ lat: number; lng: number } | null>(null);
+
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setGeoOffset({
+          lat: pos.coords.latitude  - DATA_CENTROID.lat,
+          lng: pos.coords.longitude - DATA_CENTROID.lng,
+        });
+      },
+      () => { /* permission denied — keep Bangalore coords */ },
+      { timeout: 6000, maximumAge: 300_000 },
+    );
+  }, []);
+
+  // Apply offset to every cluster before rendering markers.
+  const localizedClusters = useMemo(() => {
+    if (!geoOffset) return clusters;
+    return clusters.map((c) => ({
+      ...c,
+      centroidLat: c.centroidLat + geoOffset.lat,
+      centroidLng: c.centroidLng + geoOffset.lng,
+    }));
+  }, [clusters, geoOffset]);
+
+  // Stable initial center on first render (before geolocation resolves).
+  // FlyToOffset will move the camera once geoOffset is known.
   const center = useMemo<[number, number]>(() => {
-    if (clusters.length === 0) return [12.9716, 77.5946];
-    // Use the centroid of all cluster centroids so the map starts centred on
-    // the actual issue density, not just the first item in the list.
-    const avgLat =
-      clusters.reduce((s, c) => s + c.centroidLat, 0) / clusters.length;
-    const avgLng =
-      clusters.reduce((s, c) => s + c.centroidLng, 0) / clusters.length;
+    if (clusters.length === 0) return [DATA_CENTROID.lat, DATA_CENTROID.lng];
+    const avgLat = clusters.reduce((s, c) => s + c.centroidLat, 0) / clusters.length;
+    const avgLng = clusters.reduce((s, c) => s + c.centroidLng, 0) / clusters.length;
     return [avgLat, avgLng];
   }, []); // eslint-disable-line react-hooks/exhaustive-deps — intentionally fixed on mount
 
@@ -185,7 +234,8 @@ export default function MapView({ clusters }: { clusters: MapCluster[] }) {
         />
         <CustomAttribution />
         <LocateButton />
-        {clusters.map((c) => (
+        <FlyToOffset geoOffset={geoOffset} clusters={clusters} />
+        {localizedClusters.map((c) => (
           <Marker
             key={c.id}
             position={[c.centroidLat, c.centroidLng]}

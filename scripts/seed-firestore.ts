@@ -1,6 +1,5 @@
 import "dotenv/config";
 
-// Bootstrap Firebase Admin before anything else.
 import { initializeApp, getApps, cert } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 
@@ -19,6 +18,9 @@ const db = getFirestore();
 // Seeds demo users + clusters so the dashboard/map/digest demo works immediately
 // without needing the Gemini API. Idempotent: checks for existing data before inserting.
 // Run with: npm run db:seed
+//
+// DATA_CENTROID for MapView.tsx geolocation offset: { lat: 12.972, lng: 77.637 }
+// MapView reads this constant and offsets all cluster pins to the viewer's real location.
 
 const DEPARTMENT_BY_CATEGORY: Record<string, string> = {
   pothole: "Public Works Department (Roads)",
@@ -28,7 +30,6 @@ const DEPARTMENT_BY_CATEGORY: Record<string, string> = {
   other: "Municipal Grievance Cell",
 };
 
-// Deterministic pseudo-embeddings (768-dim), same as the old Prisma seed.
 function hashString(s: string): number {
   let h = 2166136261;
   for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619);
@@ -52,8 +53,153 @@ const FIRST = [
   "Lakshmi", "Arjun", "Fatima", "Rahul", "Neha", "Karthik", "Sneha",
 ];
 
+// Cluster definitions — coordinates are around the DATA_CENTROID (12.972, 77.637).
+// MapView.tsx applies a geoOffset so pins appear near the viewer's actual location.
+const DEMO_CLUSTERS = [
+  {
+    seed: "ph-major-junction",
+    category: "pothole",
+    severity: "high",
+    status: "acknowledged",
+    center: { lat: 12.9720, lng: 77.6380 },
+    count: 14,
+    verifiers: 5,
+    descriptions: [
+      "A large pothole spanning nearly the full width of the lane has been worsening since last month's rains. Vehicles swerve into the opposite lane to avoid it.",
+      "Deep crater-like depression on this road. Water pools here after rain, making the true depth invisible and causing axle damage.",
+      "Multiple potholes have merged into one large excavation. Two motorcycles have reportedly fallen here this week alone.",
+    ],
+    images: ["/images/demo/pothole-1.jpg", "/images/demo/pothole-2.jpg"],
+  },
+  {
+    seed: "ph-side-road",
+    category: "pothole",
+    severity: "high",
+    status: "acknowledged",
+    center: { lat: 12.9695, lng: 77.6280 },
+    count: 9,
+    verifiers: 4,
+    descriptions: [
+      "A wide pothole is forcing two-wheelers into oncoming traffic. The road surface crumbles further with every passing truck.",
+      "Rain-filled pothole on the service lane hides its depth, making it risky especially at night.",
+      "Pothole has grown to span half the road width. Causes severe jolting to vehicles and is close to a school entry gate.",
+    ],
+    images: ["/images/demo/pothole-2.jpg", "/images/demo/pothole-3.jpg"],
+  },
+  {
+    seed: "ph-minor-residential",
+    category: "pothole",
+    severity: "med",
+    status: "submitted",
+    center: { lat: 12.9760, lng: 77.6450 },
+    count: 3,
+    verifiers: 0,
+    descriptions: [
+      "A pothole roughly 30 cm across has appeared near the T-junction. Deepens significantly after each rainfall.",
+    ],
+    images: ["/images/demo/pothole-3.jpg"],
+  },
+  {
+    seed: "gb-market-overflow",
+    category: "garbage",
+    severity: "high",
+    status: "in_progress",
+    center: { lat: 12.9640, lng: 77.6310 },
+    count: 6,
+    verifiers: 2,
+    descriptions: [
+      "Overflowing waste bins and scattered garbage has been accumulating for over 10 days. Foul smell and flies are a serious health hazard for nearby residents.",
+      "Mixed waste — food scraps, plastic, broken glass — is dumped at this corner daily. Stray animals rummage through it and spread waste further onto the footpath.",
+    ],
+    images: ["/images/demo/garbage-1.jpg", "/images/demo/garbage-3.jpg"],
+  },
+  {
+    seed: "gb-illegal-dumping",
+    category: "garbage",
+    severity: "med",
+    status: "submitted",
+    center: { lat: 12.9780, lng: 77.6420 },
+    count: 4,
+    verifiers: 1,
+    descriptions: [
+      "An illegal dumping site has formed in the vacant plot at this corner. Construction debris mixed with domestic waste.",
+      "Garbage pile at the corner spills onto the footpath, forcing pedestrians onto the road.",
+    ],
+    images: ["/images/demo/garbage-1.jpg"],
+  },
+  {
+    seed: "wl-burst-main",
+    category: "water_leak",
+    severity: "high",
+    status: "in_progress",
+    center: { lat: 12.9710, lng: 77.6470 },
+    count: 5,
+    verifiers: 3,
+    descriptions: [
+      "A burst main is gushing water at high pressure, creating a pool that has blocked one lane. Vehicles unable to pass. Enormous wastage of drinking water.",
+      "Water pipe fracture is causing significant road flooding. The surface is breaking up under the water pressure and needs urgent repair.",
+    ],
+    images: ["/images/demo/water-2.jpg", "/images/demo/water-3.jpg"],
+  },
+  {
+    seed: "wl-underground-seepage",
+    category: "water_leak",
+    severity: "high",
+    status: "submitted",
+    center: { lat: 12.9680, lng: 77.6350 },
+    count: 3,
+    verifiers: 1,
+    descriptions: [
+      "Underground pipe seepage is causing the road surface to soften and develop cracks. Has been slowly leaking for 2 weeks with no municipal response.",
+    ],
+    images: ["/images/demo/water-2.jpg"],
+  },
+  {
+    seed: "sl-main-junction",
+    category: "broken_streetlight",
+    severity: "low",
+    status: "submitted",
+    center: { lat: 12.9730, lng: 77.6300 },
+    count: 4,
+    verifiers: 2,
+    descriptions: [
+      "Street lamp at this junction has been non-functional for 3 weeks. Commuters and pedestrians are at serious safety risk after sunset.",
+      "Two consecutive street poles are dark, making the entire stretch hazardous for pedestrians and cyclists at night.",
+    ],
+    images: ["/images/demo/streetlight-1.jpg"],
+  },
+  {
+    seed: "sl-residential-lane",
+    category: "broken_streetlight",
+    severity: "low",
+    status: "submitted",
+    center: { lat: 12.9800, lng: 77.6380 },
+    count: 2,
+    verifiers: 0,
+    descriptions: [
+      "Street light in this residential lane is flickering and goes completely dark after midnight. Repeated calls to the electricity department have gone unanswered.",
+    ],
+    images: ["/images/demo/streetlight-1.jpg"],
+  },
+  {
+    seed: "other-collapsed-footpath",
+    category: "other",
+    severity: "med",
+    status: "submitted",
+    center: { lat: 12.9660, lng: 77.6400 },
+    count: 2,
+    verifiers: 0,
+    descriptions: [
+      "A large section of footpath has collapsed, exposing underground drainage infrastructure. Pedestrians are forced onto the busy road.",
+      "Footpath tiles have buckled and cracked, raising sharp edges. A serious tripping hazard especially for the elderly and children.",
+    ],
+    images: ["/images/demo/pothole-1.jpg"],
+  },
+];
+
 async function checkAlreadySeeded(): Promise<boolean> {
-  const snap = await db.collection("users").where("email", "==", "demo@communityhero.app").limit(1).get();
+  // Check clusters (not users) so db:wipe + db:seed works without wiping accounts.
+  const snap = await db.collection("clusters").limit(1).get();
   return !snap.empty;
 }
 
@@ -74,6 +220,7 @@ async function seedCluster(opts: {
   center: { lat: number; lng: number };
   count: number;
   descriptions: string[];
+  images: string[];
   verifiers?: number;
 }) {
   const jitterRng = makeRng(hashString(opts.seed + ":geo"));
@@ -90,8 +237,7 @@ async function seedCluster(opts: {
   const verifierPool = opts.users.filter((u) => !reporterIds.has(u));
   const verifierCount = Math.min(opts.verifiers ?? 0, verifierPool.length);
 
-  const department = DEPARTMENT_BY_CATEGORY[opts.category];
-  const title = `${opts.category.replace(/_/g, " ")} near ${opts.center.lat.toFixed(5)}, ${opts.center.lng.toFixed(5)}`;
+  const department = DEPARTMENT_BY_CATEGORY[opts.category] ?? "Municipal Grievance Cell";
   const summary = opts.descriptions[0];
   const now = new Date();
 
@@ -100,7 +246,7 @@ async function seedCluster(opts: {
     category: opts.category,
     severity: opts.severity,
     status: opts.status,
-    title,
+    title: `${opts.category.replace(/_/g, " ")} near ${opts.center.lat.toFixed(5)}, ${opts.center.lng.toFixed(5)}`,
     summary,
     centroidLat,
     centroidLng,
@@ -115,7 +261,6 @@ async function seedCluster(opts: {
   });
   const clusterId = clusterRef.id;
 
-  // Verifications (deterministic ID: ${clusterId}_${userId})
   for (let i = 0; i < verifierCount; i++) {
     await db
       .collection("verifications")
@@ -123,24 +268,24 @@ async function seedCluster(opts: {
       .set({ clusterId, userId: verifierPool[i], createdAt: now });
   }
 
-  // Reports
   for (let i = 0; i < opts.count; i++) {
     const description = opts.descriptions[i % opts.descriptions.length];
+    const imagePath = opts.images[i % opts.images.length];
     const userId = opts.users[i % opts.users.length];
     await db.collection("reports").doc().set({
       category: opts.category,
       severity: opts.severity,
       description,
       department,
-      complaintDraft: `Subject: ${title}\n\nTo the ${department},\n\n${description} Residents request prompt inspection and resolution.\n\nThank you.`,
+      complaintDraft: `Subject: Civic Issue — ${opts.category.replace(/_/g, " ")} requiring urgent attention\n\nTo the ${department},\n\n${description} Residents request prompt inspection and resolution at the earliest.\n\nThank you.`,
       isValid: true,
-      imagePath: "/globe.svg",
+      imagePath,
       lat: points[i].lat,
       lng: points[i].lng,
       embedding: JSON.stringify(embeddingFrom(opts.seed, i)),
       userId,
       clusterId,
-      createdAt: new Date(now.getTime() + i * 1000), // staggered so order is stable
+      createdAt: new Date(now.getTime() + i * 1000),
     });
   }
 
@@ -153,24 +298,17 @@ async function main() {
     return;
   }
 
-  // Users
   const demoId = await createUser("demo@communityhero.app", "Demo Citizen");
   const userIds: string[] = [demoId];
   for (let i = 0; i < FIRST.length; i++) {
     userIds.push(await createUser(`${FIRST[i].toLowerCase()}${i}@example.com`, `${FIRST[i]} K.`));
   }
 
-  // Clusters — Koramangala / Indiranagar / Jayanagar / MG Road
-  await seedCluster({ users: userIds, category: "pothole", severity: "high", status: "acknowledged", seed: "pothole-koramangala", center: { lat: 12.9352, lng: 77.6245 }, count: 12, verifiers: 3, descriptions: ["A large pothole spans the width of the road, exposing loose gravel.", "Deep pothole near the junction is forcing vehicles to swerve.", "Water-filled pothole hides its depth and is a hazard at night."] });
-  await seedCluster({ users: userIds, category: "garbage", severity: "med", status: "submitted", seed: "garbage-indiranagar", center: { lat: 12.9719, lng: 77.6412 }, count: 4, verifiers: 2, descriptions: ["An uncleared garbage pile is overflowing onto the footpath.", "Mixed waste dumped at the street corner is attracting stray animals."] });
-  await seedCluster({ users: userIds, category: "water_leak", severity: "high", status: "in_progress", seed: "waterleak-jayanagar", center: { lat: 12.9299, lng: 77.5826 }, count: 2, descriptions: ["A burst pipeline is leaking continuously and flooding the road."] });
-  await seedCluster({ users: userIds, category: "broken_streetlight", severity: "low", status: "submitted", seed: "streetlight-mg-road", center: { lat: 12.9756, lng: 77.6068 }, count: 1, descriptions: ["A streetlight stays off after dark, leaving the stretch unlit."] });
-
-  // Clusters — Whitefield / ITPL
-  await seedCluster({ users: userIds, category: "pothole", severity: "high", status: "acknowledged", seed: "pothole-itpl-main-rd", center: { lat: 12.9852, lng: 77.7359 }, count: 9, verifiers: 4, descriptions: ["A wide pothole on ITPL Main Road is forcing two-wheelers into oncoming traffic.", "Crater-like pothole near the Hotel Zuri stretch jolts every passing vehicle.", "Rain-filled pothole on the service road hides its depth and is risky after dark."] });
-  await seedCluster({ users: userIds, category: "garbage", severity: "med", status: "submitted", seed: "garbage-maruthi-nagar", center: { lat: 12.9866, lng: 77.7338 }, count: 5, descriptions: ["An overflowing garbage pile at the Maruthi Nagar corner spills onto the footpath.", "Uncleared mixed waste near the EPIP gate is attracting stray dogs."] });
-  await seedCluster({ users: userIds, category: "broken_streetlight", severity: "low", status: "submitted", seed: "streetlight-epip-zone", center: { lat: 12.9841, lng: 77.7371 }, count: 3, descriptions: ["A streetlight on the EPIP Zone road stays off after dark, leaving the stretch unlit.", "Two consecutive poles are dark, making the pavement unsafe at night."] });
-  await seedCluster({ users: userIds, category: "water_leak", severity: "high", status: "in_progress", seed: "waterleak-whitefield", center: { lat: 12.9838, lng: 77.7349 }, count: 2, descriptions: ["A burst pipeline near the industrial area is leaking continuously and flooding the road."] });
+  for (const cluster of DEMO_CLUSTERS) {
+    await seedCluster({ users: userIds, ...cluster });
+    process.stdout.write(".");
+  }
+  console.log();
 
   const [clusterCount, reportCount] = await Promise.all([
     db.collection("clusters").count().get().then((s) => s.data().count),
@@ -179,8 +317,4 @@ async function main() {
   console.log(`Seeded ${userIds.length} users, ${clusterCount} clusters, ${reportCount} reports.`);
 }
 
-main()
-  .catch((err) => {
-    console.error(err);
-    process.exit(1);
-  });
+main().catch((err) => { console.error(err); process.exit(1); });
