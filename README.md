@@ -73,6 +73,36 @@ GCHeros separates concerns cleanly:
 
 ---
 
+## 🌐 Browser Compatibility
+
+GCHeros has been **tested and verified on Google Chrome** (and Chromium-based browsers such as Microsoft Edge and Brave).
+
+**Known issues with non-Chromium browsers:**
+- **Firefox**: The animated background and `backdrop-filter` effects cause rendering jank. A `[data-ff]` CSS flag is in place to partially mitigate this, but some visual glitches remain.
+- **Safari / WebKit**: PWA install behaviour and certain CSS features may not behave as expected.
+
+> **Recommendation**: Use Google Chrome for the best experience. Non-Chromium browser support is a planned future improvement.
+
+---
+
+## 🔮 Future Scope
+
+The v1 release focuses on the core citizen-reporting flow. Planned future enhancements include:
+
+| Area | Description |
+|------|-------------|
+| **Non-Chromium Browser Support** | Full compatibility with Firefox and Safari — fixing animation jank, backdrop-filter, and WebKit PWA quirks. |
+| **Video Reporting** | Allow citizens to record short clips; the backend samples frames and runs each through the existing image-analysis pipeline. |
+| **Real Municipal API Integration** | Replace simulated department routing and status updates with live integrations to municipal systems. |
+| **Push Notifications** | Notify citizens when their reported issue changes status (acknowledged → in-progress → resolved). |
+| **Visual Deduplication (CLIP / DINOv2)** | GPU-based image-similarity dedup as a complement to the current text-embedding cosine similarity, catching visually identical photos of the same pothole. |
+| **Gamification & Impact Dashboards** | Citizen badges, streak tracking, neighbourhood leaderboards, and a predictive heatmap for upcoming civic failures. |
+| **EXIF Geolocation Fallback** | Parse GPS coordinates from photo EXIF data as a fallback when browser geolocation is denied. |
+| **Multi-language Support** | Localised UI and Gemini complaint drafts in regional languages. |
+| **Offline Reporting Queue** | Queue reports locally when offline and submit automatically when connectivity is restored, leveraging the PWA service worker. |
+
+---
+
 <div align="center">
   <p>Built with ❤️ for <b>Vibe2Ship</b>.</p>
 </div>
