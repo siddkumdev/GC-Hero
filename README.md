@@ -34,7 +34,7 @@ Instead of filling out tedious forms, a citizen just snaps a photo. **Google Gem
 - **AI / Vision**: [`@google/genai`](https://www.npmjs.com/package/@google/genai)
 - **Database**: Firebase (Firestore Admin SDK)
 - **Maps**: Leaflet + React-Leaflet
-- **Deployment**: Google Cloud Run / Vercel
+- **Deployment**: Google Cloud
 
 ---
 
